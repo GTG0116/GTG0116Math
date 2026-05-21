@@ -106,6 +106,20 @@
     </aside>
   </div>
 
+  <div class="event-overlay" id="eventOverlay" aria-hidden="true" hidden>
+    <aside class="event-dialog" role="dialog" aria-modal="true" aria-labelledby="eventAlertTitle" aria-describedby="eventAlertDescription">
+      <div class="panel-header">
+        <div>
+          <p class="eyebrow">Random Event</p>
+          <h2 id="eventAlertTitle">BREAKING NEWS</h2>
+        </div>
+      </div>
+      <h3 id="eventAlertName"></h3>
+      <p id="eventAlertDescription"></p>
+      <button class="event-acknowledge-button" id="acknowledgeEventButton" type="button">Acknowledge</button>
+    </aside>
+  </div>
+
   <script src="script.js"></script>
 </body>
 </html>
