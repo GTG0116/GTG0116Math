@@ -5,10 +5,21 @@
   --muted: #667085;
   --paper: #ffffff;
   --line: #d8e3f4;
-  --gold: #f3bf35;
   --green: #1f9d67;
   --bg: #eef5ff;
   --shadow: 0 18px 50px rgba(20, 56, 110, 0.14);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --soft-bg: #f8fbff;
+  --panel-bg: #fbfdff;
+  --button-bg: #f7fbff;
+  --tile-line: #e5edf8;
+  --body-fade: rgba(255, 255, 255, 0.84);
+  --body-fade-end: rgba(238, 245, 255, 0.92);
+  --stripe-a: #e3efff;
+  --stripe-b: #f8fbff;
+  --glow: rgba(11, 100, 192, 0.18);
+  --blue-soft: rgba(11, 100, 192, 0.2);
+  --focus: rgba(11, 100, 192, 0.32);
 }
 
 * {
@@ -22,8 +33,37 @@ body {
   color: var(--ink);
   overflow-x: hidden;
   background:
-    linear-gradient(180deg, rgba(255, 255, 255, 0.84), rgba(238, 245, 255, 0.92)),
-    repeating-linear-gradient(135deg, #e3efff 0 18px, #f8fbff 18px 36px);
+    radial-gradient(circle at 18% 18%, color-mix(in srgb, var(--blue) 18%, transparent), transparent 32%),
+    radial-gradient(circle at 82% 8%, color-mix(in srgb, var(--blue-dark) 16%, transparent), transparent 34%),
+    linear-gradient(180deg, var(--body-fade), var(--body-fade-end)),
+    repeating-linear-gradient(135deg, var(--stripe-a) 0 18px, var(--stripe-b) 18px 36px);
+  background-size: 140% 140%, 160% 160%, auto, auto;
+  animation: backgroundDrift 18s ease-in-out infinite alternate;
+  transition: background-color 220ms ease, color 220ms ease;
+}
+
+body.dark-mode {
+  --blue: #5ba7ff;
+  --blue-dark: #9ac9ff;
+  --ink: #edf5ff;
+  --muted: #a8b6c9;
+  --paper: #101927;
+  --line: #2e425c;
+  --green: #53d291;
+  --bg: #07111f;
+  --shadow: 0 18px 54px rgba(0, 0, 0, 0.42);
+  --card-bg: rgba(11, 20, 34, 0.94);
+  --soft-bg: #101927;
+  --panel-bg: #0d1726;
+  --button-bg: #14243a;
+  --tile-line: #283a52;
+  --body-fade: rgba(7, 17, 31, 0.94);
+  --body-fade-end: rgba(8, 15, 27, 0.96);
+  --stripe-a: #07111f;
+  --stripe-b: #0d1a2c;
+  --glow: rgba(91, 167, 255, 0.2);
+  --blue-soft: rgba(91, 167, 255, 0.18);
+  --focus: rgba(91, 167, 255, 0.36);
 }
 
 body.shop-open,
@@ -33,6 +73,15 @@ body.event-open {
 
 button {
   font: inherit;
+}
+
+button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+button:focus-visible {
+  outline: 3px solid var(--focus);
+  outline-offset: 3px;
 }
 
 .game-shell {
@@ -49,9 +98,11 @@ button {
 .shop-panel,
 .event-dialog {
   position: relative;
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--card-bg);
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
+  backdrop-filter: blur(18px);
+  transition: background 220ms ease, border-color 220ms ease, box-shadow 220ms ease;
 }
 
 .play-area {
@@ -63,6 +114,19 @@ button {
   grid-template-rows: auto auto auto 1fr;
   gap: 22px;
   overflow: hidden;
+  isolation: isolate;
+  animation: shellIn 420ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.play-area::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--blue) 10%, transparent), transparent 34%),
+    radial-gradient(ellipse at top, color-mix(in srgb, var(--blue) 12%, transparent), transparent 48%);
+  pointer-events: none;
 }
 
 .shop-panel {
@@ -71,7 +135,7 @@ button {
   max-height: min(840px, calc(100vh - 24px));
   padding: 20px;
   display: grid;
-  grid-template-rows: auto minmax(0, 1fr) auto;
+  grid-template-rows: auto minmax(0, 1fr);
   overflow: hidden;
 }
 
@@ -135,8 +199,10 @@ h3 {
   border-radius: 8px;
   padding: 10px 14px;
   color: var(--blue-dark);
-  background: #f7fbff;
+  background: var(--button-bg);
   cursor: pointer;
+  box-shadow: 0 8px 18px rgba(20, 56, 110, 0.08);
+  transition: transform 160ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease, color 180ms ease;
 }
 
 .primary-action {
@@ -147,6 +213,8 @@ h3 {
 
 .small-button:hover {
   border-color: var(--blue);
+  transform: translateY(-1px);
+  box-shadow: 0 12px 24px rgba(20, 56, 110, 0.14);
 }
 
 .primary-action:hover {
@@ -154,30 +222,44 @@ h3 {
   border-color: var(--blue-dark);
 }
 
+.small-button:active {
+  transform: translateY(1px);
+}
+
 .score-panel {
   border-radius: 8px;
   padding: 18px;
-  background: #f8fbff;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--blue) 12%, transparent), transparent 42%),
+    var(--soft-bg);
   border: 1px solid var(--line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 45%, transparent);
+  transition: background 220ms ease, border-color 220ms ease, transform 180ms ease;
 }
 
 .event-panel {
   border-radius: 8px;
   padding: 16px;
-  background: #fbfdff;
+  background: var(--panel-bg);
   border: 1px solid var(--line);
   display: grid;
   gap: 12px;
+  transition: background 220ms ease, border-color 220ms ease, transform 180ms ease, box-shadow 180ms ease;
+}
+
+.event-panel:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 12px 28px rgba(20, 56, 110, 0.08);
 }
 
 .event-panel.positive {
   border-color: #a8e1c6;
-  background: #f3fff8;
+  background: color-mix(in srgb, var(--panel-bg) 76%, #1f9d67);
 }
 
 .event-panel.negative {
   border-color: #f0b2b2;
-  background: #fff7f7;
+  background: color-mix(in srgb, var(--panel-bg) 82%, #b42318);
 }
 
 .event-panel h2 {
@@ -202,8 +284,14 @@ h3 {
   align-items: center;
   border-radius: 8px;
   padding: 10px 12px;
-  background: white;
-  border: 1px solid #e5edf8;
+  background: var(--paper);
+  border: 1px solid var(--tile-line);
+  animation: itemIn 260ms ease both;
+  transition: background 180ms ease, border-color 180ms ease, transform 180ms ease;
+}
+
+.active-event:hover {
+  transform: translateX(2px);
 }
 
 .active-event strong,
@@ -229,6 +317,13 @@ h3 {
   font-weight: 800;
   line-height: 1;
   color: var(--blue-dark);
+  text-shadow: 0 6px 26px var(--glow);
+  transform-origin: left center;
+  transition: color 220ms ease, text-shadow 220ms ease;
+}
+
+.score-bump {
+  animation: scoreBump 260ms ease-out;
 }
 
 .stats-grid {
@@ -242,7 +337,14 @@ h3 {
   border-radius: 8px;
   padding: 12px;
   background: var(--paper);
-  border: 1px solid #e5edf8;
+  border: 1px solid var(--tile-line);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 40%, transparent);
+  transition: transform 170ms ease, background 180ms ease, border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.stats-grid div:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 10px 22px rgba(20, 56, 110, 0.1);
 }
 
 .stats-grid span,
@@ -277,7 +379,8 @@ h3 {
   background: transparent;
   cursor: pointer;
   filter: drop-shadow(0 24px 28px rgba(6, 72, 135, 0.2));
-  transition: transform 120ms ease, filter 120ms ease;
+  animation: flagFloat 5.4s ease-in-out infinite;
+  transition: transform 120ms ease, filter 160ms ease;
 }
 
 .flag-button:hover {
@@ -286,7 +389,8 @@ h3 {
 }
 
 .flag-button:active {
-  transform: translateY(2px) scale(0.98);
+  transform: translateY(2px) scale(0.965);
+  filter: drop-shadow(0 16px 18px rgba(6, 72, 135, 0.2));
 }
 
 .flag {
@@ -296,6 +400,11 @@ h3 {
   border-radius: 8px;
   border: 2px solid #d6e5f8;
   background: white;
+  transition: border-color 180ms ease, box-shadow 180ms ease;
+}
+
+.flag-button:hover .flag {
+  box-shadow: 0 0 0 6px color-mix(in srgb, var(--blue) 10%, transparent);
 }
 
 .float-layer {
@@ -310,8 +419,8 @@ h3 {
   color: var(--green);
   font-weight: 800;
   font-size: 1.25rem;
-  animation: floatUp 900ms ease-out forwards;
-  text-shadow: 0 2px 0 white;
+  animation: floatUp 900ms cubic-bezier(0.16, 1, 0.3, 1) forwards;
+  text-shadow: 0 2px 0 var(--paper);
 }
 
 @keyframes floatUp {
@@ -333,6 +442,10 @@ h3 {
   align-items: center;
 }
 
+.shop-stats {
+  display: none;
+}
+
 .shop-overlay {
   position: fixed;
   inset: 0;
@@ -341,6 +454,12 @@ h3 {
   place-items: center;
   padding: 12px;
   background: rgba(8, 24, 48, 0.5);
+  animation: overlayIn 180ms ease both;
+}
+
+.shop-overlay.is-closing {
+  animation: overlayOut 220ms ease both;
+  pointer-events: none;
 }
 
 .shop-overlay[hidden] {
@@ -355,6 +474,7 @@ h3 {
   place-items: center;
   padding: 12px;
   background: rgba(8, 24, 48, 0.58);
+  animation: overlayIn 180ms ease both;
 }
 
 .event-overlay[hidden] {
@@ -375,11 +495,12 @@ h3 {
   background: var(--blue);
   font-weight: 800;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease;
+  transition: transform 140ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .event-acknowledge-button:hover {
   background: var(--blue-dark);
+  box-shadow: 0 12px 24px var(--glow);
 }
 
 .event-acknowledge-button:active {
@@ -392,6 +513,22 @@ h3 {
   overflow-x: hidden;
   padding-right: 6px;
   scrollbar-gutter: stable;
+  scroll-behavior: smooth;
+}
+
+.shop-scroll::-webkit-scrollbar {
+  width: 10px;
+}
+
+.shop-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.shop-scroll::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--blue) 34%, transparent);
+  border: 3px solid transparent;
+  border-radius: 8px;
+  background-clip: content-box;
 }
 
 .upgrade-list {
@@ -404,7 +541,11 @@ h3 {
 .rebirth-panel {
   border-radius: 8px;
   border: 1px solid var(--line);
-  background: #fbfdff;
+  background:
+    linear-gradient(145deg, color-mix(in srgb, var(--blue) 7%, transparent), transparent 42%),
+    var(--panel-bg);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, white 38%, transparent);
+  transition: transform 180ms ease, border-color 180ms ease, box-shadow 180ms ease, background 220ms ease;
 }
 
 .upgrade-card {
@@ -414,6 +555,26 @@ h3 {
   gap: 14px;
   min-width: 0;
   overflow: hidden;
+  animation: itemIn 280ms ease both;
+}
+
+.upgrade-card:nth-child(2n) {
+  animation-delay: 35ms;
+}
+
+.upgrade-card:nth-child(3n) {
+  animation-delay: 70ms;
+}
+
+.upgrade-card:hover,
+.rebirth-panel:hover {
+  transform: translateY(-3px);
+  border-color: color-mix(in srgb, var(--blue) 55%, var(--line));
+  box-shadow: 0 14px 30px rgba(20, 56, 110, 0.12);
+}
+
+.upgrade-bought {
+  animation: buyPop 360ms ease-out;
 }
 
 .upgrade-card p,
@@ -439,12 +600,15 @@ h3 {
   background: var(--blue);
   font-weight: 800;
   cursor: pointer;
-  transition: transform 120ms ease, background 120ms ease, opacity 120ms ease;
+  box-shadow: 0 10px 20px var(--glow);
+  transition: transform 140ms ease, background 160ms ease, opacity 160ms ease, box-shadow 160ms ease, filter 160ms ease;
 }
 
 .buy-button:hover,
 .rebirth-button:hover {
   background: var(--blue-dark);
+  box-shadow: 0 14px 28px var(--glow);
+  filter: saturate(1.06);
 }
 
 .buy-button:active,
@@ -456,11 +620,15 @@ h3 {
 .rebirth-button:disabled {
   opacity: 0.5;
   cursor: not-allowed;
+  box-shadow: none;
 }
 
 .rebirth-panel {
   margin-top: 14px;
   padding: 18px;
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--blue) 18%, transparent), transparent 50%),
+    var(--panel-bg);
 }
 
 .rebirth-stats {
@@ -473,8 +641,14 @@ h3 {
 .rebirth-stats div {
   border-radius: 8px;
   padding: 12px;
-  background: #f8fbff;
-  border: 1px solid #e5edf8;
+  background: var(--soft-bg);
+  border: 1px solid var(--tile-line);
+  transition: transform 170ms ease, border-color 180ms ease;
+}
+
+.rebirth-stats div:hover {
+  transform: translateY(-2px);
+  border-color: color-mix(in srgb, var(--blue) 50%, var(--tile-line));
 }
 
 .rebirth-stats span {
@@ -497,22 +671,137 @@ h3 {
   margin: 16px 0;
   padding: 12px;
   border-radius: 8px;
-  background: #fff8df;
-  border: 1px solid #f6df91;
+  background: color-mix(in srgb, var(--paper) 82%, var(--blue));
+  border: 1px solid color-mix(in srgb, var(--blue) 34%, var(--line));
 }
 
 .rebirth-cost strong {
-  color: #8a5b00;
+  color: var(--blue-dark);
   font-size: 1.25rem;
 }
 
 .rebirth-button {
-  background: var(--gold);
-  color: #3c2a00;
+  background: linear-gradient(135deg, var(--blue), var(--blue-dark));
+  color: white;
 }
 
 .rebirth-button:hover {
-  background: #dfa918;
+  background: var(--blue-dark);
+}
+
+@keyframes backgroundDrift {
+  from {
+    background-position: 0% 0%, 100% 0%, center, 0 0;
+  }
+  to {
+    background-position: 18% 12%, 76% 18%, center, 36px 36px;
+  }
+}
+
+@keyframes shellIn {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes overlayIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@keyframes overlayOut {
+  from {
+    opacity: 1;
+  }
+  to {
+    opacity: 0;
+  }
+}
+
+.shop-overlay:not([hidden]) .shop-panel,
+.event-overlay:not([hidden]) .event-dialog {
+  animation: modalIn 240ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+}
+
+.shop-overlay.is-closing .shop-panel {
+  animation: modalOut 220ms ease both;
+}
+
+@keyframes modalIn {
+  from {
+    opacity: 0;
+    transform: translateY(18px) scale(0.98);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+@keyframes modalOut {
+  from {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: translateY(16px) scale(0.98);
+  }
+}
+
+@keyframes itemIn {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scoreBump {
+  0% {
+    transform: scale(1);
+  }
+  45% {
+    transform: scale(1.035);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes buyPop {
+  0% {
+    transform: translateY(-3px) scale(1);
+  }
+  45% {
+    transform: translateY(-5px) scale(1.015);
+    box-shadow: 0 16px 34px var(--blue-soft);
+  }
+  100% {
+    transform: translateY(-3px) scale(1);
+  }
+}
+
+@keyframes flagFloat {
+  0%,
+  100% {
+    filter: drop-shadow(0 24px 28px rgba(6, 72, 135, 0.2));
+  }
+  50% {
+    filter: drop-shadow(0 29px 34px rgba(6, 72, 135, 0.24));
+  }
 }
 
 @media (max-width: 920px) {
@@ -548,13 +837,109 @@ h3 {
   .shop-panel {
     width: calc(100vw - 20px);
     max-height: calc(100vh - 20px);
+    padding: 12px;
   }
 
   .panel-header {
     align-items: flex-start;
+    margin-bottom: 10px;
+  }
+
+  .shop-stats {
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+    margin-bottom: 10px;
+    padding-bottom: 10px;
+    background: var(--card-bg);
+  }
+
+  .shop-stats div {
+    min-height: 54px;
+    border-radius: 8px;
+    padding: 8px;
+    background: var(--soft-bg);
+    border: 1px solid var(--tile-line);
+    box-shadow: inset 0 1px 0 color-mix(in srgb, white 36%, transparent);
+  }
+
+  .shop-stats span {
+    display: block;
+    color: var(--muted);
+    font-size: 0.7rem;
+  }
+
+  .shop-stats strong {
+    display: block;
+    margin-top: 5px;
+    font-size: 0.98rem;
+    overflow-wrap: anywhere;
   }
 
   .rebirth-stats {
     grid-template-columns: 1fr;
+  }
+
+  .score-panel {
+    position: sticky;
+    top: 0;
+    z-index: 10;
+    padding: 12px;
+    box-shadow: 0 10px 24px rgba(20, 56, 110, 0.12);
+  }
+
+  .score {
+    margin-bottom: 10px;
+    font-size: 2.1rem;
+  }
+
+  .stats-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 6px;
+  }
+
+  .stats-grid div:nth-child(n + 4) {
+    display: none;
+  }
+
+  .stats-grid div {
+    min-height: 58px;
+    padding: 8px;
+  }
+
+  .stats-grid span {
+    font-size: 0.72rem;
+  }
+
+  .stats-grid strong {
+    margin-top: 5px;
+    font-size: 1rem;
+  }
+
+  .shop-scroll {
+    padding-right: 2px;
+  }
+
+  .upgrade-list {
+    gap: 10px;
+  }
+
+  .upgrade-card,
+  .rebirth-panel {
+    padding: 12px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    scroll-behavior: auto !important;
+    transition-duration: 1ms !important;
   }
 }
