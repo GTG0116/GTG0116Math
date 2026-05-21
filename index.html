@@ -16,6 +16,7 @@
         </div>
         <div class="title-actions">
           <button class="small-button primary-action" id="shopButton" type="button">Shop</button>
+          <button class="small-button" id="darkModeButton" type="button" aria-pressed="false">Dark</button>
           <button class="small-button" id="resetButton" type="button">Reset</button>
         </div>
       </div>
@@ -77,31 +78,46 @@
         <button class="small-button" id="closeShopButton" type="button">Close</button>
       </div>
 
-      <div class="shop-scroll">
-        <div class="upgrade-list" id="upgradeList"></div>
+      <div class="shop-stats" aria-label="Current resources">
+        <div>
+          <span>Shekels</span>
+          <strong id="shopShekelCount">0</strong>
+        </div>
+        <div>
+          <span>Clicks / sec</span>
+          <strong id="shopClickCap">25</strong>
+        </div>
+        <div>
+          <span>Shekels / sec</span>
+          <strong id="shopPerSecondValue">0</strong>
+        </div>
       </div>
 
-      <div class="rebirth-panel">
-        <div>
-          <p class="eyebrow">Rebirth</p>
-          <h2>Sacrifice To Benjamin Netanyahu</h2>
-          <p>You will sacrifice everything to Benjamin Netanyahu, and in return get a permanent 50% multiplier that stacks.</p>
-        </div>
-        <div class="rebirth-stats">
+      <div class="shop-scroll">
+        <div class="upgrade-list" id="upgradeList"></div>
+
+        <div class="rebirth-panel">
           <div>
-            <span>Current</span>
-            <strong id="currentRebirthMultiplier">1.0x</strong>
+            <p class="eyebrow">Rebirth</p>
+            <h2>Sacrifice To Benjamin Netanyahu</h2>
+            <p>You will sacrifice everything to Benjamin Netanyahu, and in return get a permanent 50% multiplier that stacks.</p>
           </div>
-          <div>
-            <span>After rebirth</span>
-            <strong id="nextRebirthMultiplier">1.5x</strong>
+          <div class="rebirth-stats">
+            <div>
+              <span>Current</span>
+              <strong id="currentRebirthMultiplier">1.0x</strong>
+            </div>
+            <div>
+              <span>After rebirth</span>
+              <strong id="nextRebirthMultiplier">1.5x</strong>
+            </div>
           </div>
+          <div class="rebirth-cost">
+            <span>Required</span>
+            <strong id="rebirthCost">10,000</strong>
+          </div>
+          <button class="rebirth-button" id="rebirthButton" type="button">Rebirth</button>
         </div>
-        <div class="rebirth-cost">
-          <span>Required</span>
-          <strong id="rebirthCost">10,000</strong>
-        </div>
-        <button class="rebirth-button" id="rebirthButton" type="button">Rebirth</button>
       </div>
     </aside>
   </div>
