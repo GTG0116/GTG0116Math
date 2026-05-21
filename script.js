@@ -228,6 +228,7 @@ const baseState = {
   upgradeLevels: createEmptyUpgradeLevels(),
   activeRandomEvents: [],
   lastRandomEvent: null,
+  pendingRandomEvent: null,
   rebirths: 0,
   totalEarned: 0
 };
@@ -246,6 +247,11 @@ const elements = {
   shopButton: document.querySelector("#shopButton"),
   closeShopButton: document.querySelector("#closeShopButton"),
   shopOverlay: document.querySelector("#shopOverlay"),
+  eventOverlay: document.querySelector("#eventOverlay"),
+  eventAlertTitle: document.querySelector("#eventAlertTitle"),
+  eventAlertName: document.querySelector("#eventAlertName"),
+  eventAlertDescription: document.querySelector("#eventAlertDescription"),
+  acknowledgeEventButton: document.querySelector("#acknowledgeEventButton"),
   currentRebirthMultiplier: document.querySelector("#currentRebirthMultiplier"),
   nextRebirthMultiplier: document.querySelector("#nextRebirthMultiplier"),
   rebirthCost: document.querySelector("#rebirthCost"),
@@ -261,7 +267,11 @@ let randomEventTimer = null;
 
 renderUpgradeShop();
 updateScreen();
-scheduleRandomEvent();
+syncPendingEventOverlay();
+
+if (!state.pendingRandomEvent) {
+  scheduleRandomEvent();
+}
 
 function createEmptyUpgradeLevels() {
   return UPGRADE_DEFINITIONS.reduce((levels, upgrade) => {
@@ -297,7 +307,13 @@ function loadGame() {
 
     loaded.activeRandomEvents = Array.isArray(saved?.activeRandomEvents) ? saved.activeRandomEvents : [];
     loaded.lastRandomEvent = saved?.lastRandomEvent || null;
-    loaded.activeRandomEvents = loaded.activeRandomEvents.filter((event) => event.expiresAt > Date.now());
+    loaded.pendingRandomEvent = saved?.pendingRandomEvent || null;
+
+    if (loaded.pendingRandomEvent) {
+      pauseActiveEventTimersSinceLastSave(loaded);
+    } else {
+      loaded.activeRandomEvents = loaded.activeRandomEvents.filter((event) => event.expiresAt > Date.now());
+    }
 
     return loaded;
   } catch {
@@ -305,7 +321,8 @@ function loadGame() {
       ...baseState,
       upgradeLevels: createEmptyUpgradeLevels(),
       activeRandomEvents: [],
-      lastRandomEvent: null
+      lastRandomEvent: null,
+      pendingRandomEvent: null
     };
   }
 }
@@ -437,25 +454,29 @@ function scheduleRandomEvent() {
   window.clearTimeout(randomEventTimer);
   randomEventTimer = window.setTimeout(() => {
     triggerRandomEvent();
-    scheduleRandomEvent();
   }, randomBetween(RANDOM_EVENT_INTERVAL.min, RANDOM_EVENT_INTERVAL.max));
 }
 
 function triggerRandomEvent() {
-  if (RANDOM_EVENT_DEFINITIONS.length === 0) {
+  if (RANDOM_EVENT_DEFINITIONS.length === 0 || state.pendingRandomEvent) {
     return;
   }
 
   const event = RANDOM_EVENT_DEFINITIONS[randomBetween(0, RANDOM_EVENT_DEFINITIONS.length - 1)];
-  const result = applyRandomEvent(event);
-
-  state.lastRandomEvent = {
+  state.pendingRandomEvent = {
     id: event.id,
     type: event.type,
     name: event.name,
-    description: result
+    description: event.description,
+    effect: event.effect,
+    shekelPercent: event.shekelPercent,
+    incomeMultiplier: event.incomeMultiplier,
+    durationSeconds: event.durationSeconds,
+    startedAt: Date.now(),
+    lastPausedAt: Date.now()
   };
 
+  syncPendingEventOverlay();
   updateScreen();
   saveGame();
 }
@@ -495,6 +516,22 @@ function removeExpiredRandomEvents() {
   const removedAnyEvents = activeEvents.length !== state.activeRandomEvents.length;
   state.activeRandomEvents = activeEvents;
   return removedAnyEvents;
+}
+
+function pauseActiveEventTimersSinceLastSave(targetState = state) {
+  if (!targetState.pendingRandomEvent) {
+    return;
+  }
+
+  const now = Date.now();
+  const lastPausedAt = targetState.pendingRandomEvent.lastPausedAt || targetState.pendingRandomEvent.startedAt || now;
+  const pausedMilliseconds = Math.max(0, now - lastPausedAt);
+
+  targetState.activeRandomEvents.forEach((event) => {
+    event.expiresAt += pausedMilliseconds;
+  });
+
+  targetState.pendingRandomEvent.lastPausedAt = now;
 }
 
 function buyUpgrade(upgradeId) {
@@ -561,6 +598,41 @@ function closeShop() {
   elements.shopButton.focus();
 }
 
+function syncPendingEventOverlay() {
+  const pendingEvent = state.pendingRandomEvent;
+
+  if (!pendingEvent) {
+    elements.eventOverlay.hidden = true;
+    elements.eventOverlay.setAttribute("aria-hidden", "true");
+    document.body.classList.remove("event-open");
+    return;
+  }
+
+  elements.eventAlertTitle.textContent = "BREAKING NEWS";
+  elements.eventAlertName.textContent = pendingEvent.name;
+  elements.eventAlertDescription.textContent = pendingEvent.description;
+  elements.eventOverlay.hidden = false;
+  elements.eventOverlay.setAttribute("aria-hidden", "false");
+  document.body.classList.add("event-open");
+  elements.acknowledgeEventButton.focus();
+}
+
+function acknowledgePendingEvent() {
+  const pendingEvent = state.pendingRandomEvent;
+
+  if (!pendingEvent) {
+    return;
+  }
+
+  pauseActiveEventTimersSinceLastSave();
+  applyRandomEvent(pendingEvent);
+  state.pendingRandomEvent = null;
+  syncPendingEventOverlay();
+  updateScreen();
+  saveGame();
+  scheduleRandomEvent();
+}
+
 function showFloatText(amount, event) {
   const bounds = elements.floatLayer.getBoundingClientRect();
   const floating = document.createElement("span");
@@ -573,7 +645,10 @@ function showFloatText(amount, event) {
 }
 
 function updateScreen() {
-  removeExpiredRandomEvents();
+  if (!state.pendingRandomEvent) {
+    removeExpiredRandomEvents();
+  }
+
   const nextRebirthCost = rebirthCost();
 
   elements.shekelCount.textContent = formatNumber(state.shekels);
@@ -585,9 +660,17 @@ function updateScreen() {
   elements.nextRebirthMultiplier.textContent = `${(multiplier() + 0.5).toFixed(1)}x`;
   elements.rebirthCost.textContent = formatNumber(nextRebirthCost);
   elements.rebirthButton.disabled = state.shekels < nextRebirthCost;
-  elements.eventPanel.className = `event-panel ${state.lastRandomEvent?.type || ""}`;
-  elements.eventName.textContent = state.lastRandomEvent?.name || "Quiet for now";
-  elements.eventDescription.textContent = state.lastRandomEvent?.description || "A random event will happen every 5-10 minutes.";
+  const activeEventType = state.activeRandomEvents.some((event) => event.type === "negative") ? "negative" : state.activeRandomEvents[0]?.type || "";
+  elements.eventPanel.className = `event-panel ${activeEventType}`;
+
+  if (state.activeRandomEvents.length > 0) {
+    elements.eventName.textContent = "Active News";
+    elements.eventDescription.textContent = "Timed event effects are currently changing your income.";
+  } else {
+    elements.eventName.textContent = "Quiet for now";
+    elements.eventDescription.textContent = "A random event will happen every 5-10 minutes.";
+  }
+
   renderActiveEvents();
 
   UPGRADE_DEFINITIONS.forEach((upgrade) => {
@@ -619,6 +702,10 @@ function renderActiveEvents() {
 }
 
 elements.flagButton.addEventListener("click", (event) => {
+  if (state.pendingRandomEvent) {
+    return;
+  }
+
   const amount = perClick();
   addShekels(amount);
   showFloatText(amount, event);
@@ -639,8 +726,16 @@ document.addEventListener("keydown", (event) => {
 
 elements.rebirthButton.addEventListener("click", rebirth);
 elements.resetButton.addEventListener("click", resetGame);
+elements.acknowledgeEventButton.addEventListener("click", acknowledgePendingEvent);
 
 setInterval(() => {
+  if (state.pendingRandomEvent) {
+    pauseActiveEventTimersSinceLastSave();
+    updateScreen();
+    saveGame();
+    return;
+  }
+
   const removedExpiredEvents = removeExpiredRandomEvents();
   const earned = perSecond();
 
