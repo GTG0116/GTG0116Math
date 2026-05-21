@@ -26,7 +26,8 @@ body {
     repeating-linear-gradient(135deg, #e3efff 0 18px, #f8fbff 18px 36px);
 }
 
-body.shop-open {
+body.shop-open,
+body.event-open {
   overflow: hidden;
 }
 
@@ -45,7 +46,8 @@ button {
 }
 
 .play-area,
-.shop-panel {
+.shop-panel,
+.event-dialog {
   position: relative;
   background: rgba(255, 255, 255, 0.9);
   border: 1px solid var(--line);
@@ -71,6 +73,12 @@ button {
   display: grid;
   grid-template-rows: auto minmax(0, 1fr) auto;
   overflow: hidden;
+}
+
+.event-dialog {
+  border-radius: 8px;
+  width: min(520px, calc(100vw - 24px));
+  padding: 22px;
 }
 
 .title-row {
@@ -337,6 +345,45 @@ h3 {
 
 .shop-overlay[hidden] {
   display: none;
+}
+
+.event-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 30;
+  display: grid;
+  place-items: center;
+  padding: 12px;
+  background: rgba(8, 24, 48, 0.58);
+}
+
+.event-overlay[hidden] {
+  display: none;
+}
+
+.event-dialog p:not(.eyebrow) {
+  color: var(--muted);
+  line-height: 1.5;
+}
+
+.event-acknowledge-button {
+  width: 100%;
+  min-height: 46px;
+  border: 0;
+  border-radius: 8px;
+  color: white;
+  background: var(--blue);
+  font-weight: 800;
+  cursor: pointer;
+  transition: transform 120ms ease, background 120ms ease;
+}
+
+.event-acknowledge-button:hover {
+  background: var(--blue-dark);
+}
+
+.event-acknowledge-button:active {
+  transform: translateY(1px);
 }
 
 .shop-scroll {
