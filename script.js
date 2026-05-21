@@ -3,6 +3,7 @@ const RANDOM_EVENT_INTERVAL = {
   min: 5 * 60 * 1000,
   max: 10 * 60 * 1000
 };
+const MAX_CLICKS_PER_SECOND = 25;
 
 /*
   Add new upgrades here.
@@ -41,7 +42,7 @@ const UPGRADE_DEFINITIONS = [
     baseCost: 600,
     costMultiplier: 1.55,
     clickBonus: 0,
-    perSecondBonus: 8
+    perSecondBonus: 10
   },
   {
     id: "SocialMediaSpamBot",
@@ -49,7 +50,7 @@ const UPGRADE_DEFINITIONS = [
     description: "Bots spread across all of social media.",
     baseCost: 900,
     costMultiplier: 1.56,
-    clickBonus: 9,
+    clickBonus: 5,
     perSecondBonus: 0
   },
   {
@@ -58,8 +59,8 @@ const UPGRADE_DEFINITIONS = [
     description: "Recruit one IDF Soldier off of the streets of Israel.",
     baseCost: 5000,
     costMultiplier: 1.62,
-    clickBonus: 35,
-    perSecondBonus: 35
+    clickBonus: 15,
+    perSecondBonus: 50
   },
   {
     id: "BankHacker",
@@ -68,7 +69,7 @@ const UPGRADE_DEFINITIONS = [
     baseCost: 18000,
     costMultiplier: 1.67,
     clickBonus: 0,
-    perSecondBonus: 200
+    perSecondBonus: 150
   },
   {
     id: "BankHackers",
@@ -77,7 +78,7 @@ const UPGRADE_DEFINITIONS = [
     baseCost: 50000,
     costMultiplier: 1.72,
     clickBonus: 0,
-    perSecondBonus: 550
+    perSecondBonus: 850
   },
   {
     id: "WarPalestine",
@@ -85,7 +86,7 @@ const UPGRADE_DEFINITIONS = [
     description: "Bomb Palestine for absolutely no reason just to test out some weapons.",
     baseCost: 80000,
     costMultiplier: 1.75,
-    clickBonus: 650,
+    clickBonus: 150,
     perSecondBonus: 0
   },
   {
@@ -94,7 +95,7 @@ const UPGRADE_DEFINITIONS = [
     description: "Bomb Hezbollah for the random missile attacks they always do on Israel.",
     baseCost: 125000,
     costMultiplier: 1.78,
-    clickBonus: 900,
+    clickBonus: 300,
     perSecondBonus: 0
   },
   {
@@ -103,8 +104,8 @@ const UPGRADE_DEFINITIONS = [
     description: "AIPAC will buy Israel is the US Congress. Ensures Israel gets whatever they want.",
     baseCost: 220000,
     costMultiplier: 1.82,
-    clickBonus: 1400,
-    perSecondBonus: 1800
+    clickBonus: 500,
+    perSecondBonus: 2500
   },
   {
     id: "DonTrump",
@@ -112,8 +113,8 @@ const UPGRADE_DEFINITIONS = [
     description: "Trump will willingly fight a war for you in Iran, no questions asked. Must stop them from using enriched uranium that doesn't exist.",
     baseCost: 480000,
     costMultiplier: 1.86,
-    clickBonus: 2800,
-    perSecondBonus: 4200
+    clickBonus: 850,
+    perSecondBonus: 5000
   },
   {
     id: "UnitedStatesOfIsrael",
@@ -121,8 +122,26 @@ const UPGRADE_DEFINITIONS = [
     description: "You now have power of the strongest military on Earth.",
     baseCost: 900000,
     costMultiplier: 1.90,
+    clickBonus: 1000,
+    perSecondBonus: 10000
+  },
+  {
+    id: "Yahu",
+    name: "Blessing By Benjamin Netenyahu",
+    description: "You have gotten the most powerful, most uplifting, most inspiring blessing from Benjamin Netanyahu.",
+    baseCost: 1250000,
+    costMultiplier: 1.99,
     clickBonus: 5000,
-    perSecondBonus: 9000
+    perSecondBonus: 50000
+  },
+  {
+    id: "Yahu2",
+    name: "Benjamin Netanyahu Endorsement",
+    description: "You have gotten the official endoresment from the one and only Benjamin Netanyahu.",
+    baseCost: 1500000,
+    costMultiplier: 1.99,
+    clickBonus: 7000,
+    perSecondBonus: 75000
   },
 ];
 
@@ -183,17 +202,17 @@ const RANDOM_EVENT_DEFINITIONS = [
     id: "HezbollahMissile",
     type: "negative",
     name: "Hezbollah Missile gets through Iron Dome",
-    description: "Iron Dome doesn't stop a Hezbollan missile. You lose 14% of your current Shekels.",
+    description: "Iron Dome doesn't stop a Hezbollan missile. You lose 15% of your current Shekels.",
     effect: "instantPercent",
-    shekelPercent: -0.14
+    shekelPercent: -0.15
   },
   {
     id: "BotBan",
     type: "negative",
     name: "Bots Get Banned",
-    description: "All of your spam bots get banned by moderation. Income drops by 45% for 90 seconds.",
+    description: "All of your spam bots get banned by moderation. Income drops by 15% for 90 seconds.",
     effect: "temporaryMultiplier",
-    incomeMultiplier: 0.55,
+    incomeMultiplier: 0.75,
     durationSeconds: 90
   },
   {
@@ -217,9 +236,9 @@ const RANDOM_EVENT_DEFINITIONS = [
     id: "Corruption",
     type: "negative",
     name: "Corruption Allegation Come Up",
-    description: "Corruption allegations come up against you, and there is no evidence to defend yourself with. You lose 35% of your current Shekels.",
+    description: "Corruption allegations come up against you, and there is no evidence to defend yourself with. You lose 65% of your current Shekels.",
     effect: "instantPercent",
-    shekelPercent: -0.35
+    shekelPercent: -0.65
   }
 ];
 
@@ -230,7 +249,8 @@ const baseState = {
   lastRandomEvent: null,
   pendingRandomEvent: null,
   rebirths: 0,
-  totalEarned: 0
+  totalEarned: 0,
+  darkMode: false
 };
 
 const elements = {
@@ -247,6 +267,9 @@ const elements = {
   shopButton: document.querySelector("#shopButton"),
   closeShopButton: document.querySelector("#closeShopButton"),
   shopOverlay: document.querySelector("#shopOverlay"),
+  shopShekelCount: document.querySelector("#shopShekelCount"),
+  shopClickCap: document.querySelector("#shopClickCap"),
+  shopPerSecondValue: document.querySelector("#shopPerSecondValue"),
   eventOverlay: document.querySelector("#eventOverlay"),
   eventAlertTitle: document.querySelector("#eventAlertTitle"),
   eventAlertName: document.querySelector("#eventAlertName"),
@@ -257,6 +280,7 @@ const elements = {
   rebirthCost: document.querySelector("#rebirthCost"),
   rebirthButton: document.querySelector("#rebirthButton"),
   resetButton: document.querySelector("#resetButton"),
+  darkModeButton: document.querySelector("#darkModeButton"),
   flagButton: document.querySelector("#flagButton"),
   floatLayer: document.querySelector("#floatLayer")
 };
@@ -264,8 +288,11 @@ const elements = {
 const upgradeElements = {};
 let state = loadGame();
 let randomEventTimer = null;
+let lastManualClickAt = 0;
+let shopCloseTimer = null;
 
 renderUpgradeShop();
+applyTheme();
 updateScreen();
 syncPendingEventOverlay();
 
@@ -374,7 +401,7 @@ function firstRebirthCost() {
   }
 
   const highestUpgradeCost = Math.max(...UPGRADE_DEFINITIONS.map((upgrade) => upgrade.baseCost));
-  return Math.max(10000, Math.floor(highestUpgradeCost * 0.75));
+  return Math.max(10000, Math.floor(highestUpgradeCost * 1.5));
 }
 
 function rebirthCost() {
@@ -421,7 +448,8 @@ function renderUpgradeShop() {
     elements.upgradeList.appendChild(card);
 
     button.addEventListener("click", () => buyUpgrade(upgrade.id));
-    upgradeElements[upgrade.id] = { owned, button, cost };
+    card.addEventListener("animationend", () => card.classList.remove("upgrade-bought"));
+    upgradeElements[upgrade.id] = { card, owned, button, cost };
   });
 }
 
@@ -443,7 +471,29 @@ function addShekels(amount) {
   state.shekels += amount;
   state.totalEarned += amount;
   updateScreen();
+  animateScoreChange();
   saveGame();
+}
+
+function canRegisterManualClick() {
+  const now = Date.now();
+
+  if (now - lastManualClickAt < 1000 / MAX_CLICKS_PER_SECOND) {
+    return false;
+  }
+
+  lastManualClickAt = now;
+  return true;
+}
+
+function registerManualClick(event) {
+  if (state.pendingRandomEvent || !canRegisterManualClick()) {
+    return;
+  }
+
+  const amount = perClick();
+  addShekels(amount);
+  showFloatText(amount, event);
 }
 
 function randomBetween(min, max) {
@@ -549,6 +599,7 @@ function buyUpgrade(upgradeId) {
 
   state.shekels -= cost;
   state.upgradeLevels[upgrade.id] = getUpgradeLevel(upgrade.id) + 1;
+  upgradeElements[upgrade.id]?.card.classList.add("upgrade-bought");
 
   updateScreen();
   saveGame();
@@ -560,42 +611,61 @@ function rebirth() {
     return;
   }
 
+  const darkMode = state.darkMode;
+
   state = {
     ...baseState,
     upgradeLevels: createEmptyUpgradeLevels(),
     activeRandomEvents: [],
     lastRandomEvent: null,
     rebirths: state.rebirths + 1,
-    totalEarned: state.totalEarned
+    totalEarned: state.totalEarned,
+    darkMode
   };
 
+  applyTheme();
   updateScreen();
   saveGame();
 }
 
 function resetGame() {
+  const darkMode = state.darkMode;
+
   state = {
     ...baseState,
     upgradeLevels: createEmptyUpgradeLevels(),
     activeRandomEvents: [],
-    lastRandomEvent: null
+    lastRandomEvent: null,
+    darkMode
   };
+  applyTheme();
   updateScreen();
   saveGame();
 }
 
 function openShop() {
+  window.clearTimeout(shopCloseTimer);
   elements.shopOverlay.hidden = false;
   elements.shopOverlay.setAttribute("aria-hidden", "false");
+  elements.shopOverlay.classList.remove("is-closing");
   document.body.classList.add("shop-open");
   elements.closeShopButton.focus();
 }
 
 function closeShop() {
-  elements.shopOverlay.hidden = true;
+  if (elements.shopOverlay.hidden || elements.shopOverlay.classList.contains("is-closing")) {
+    return;
+  }
+
   elements.shopOverlay.setAttribute("aria-hidden", "true");
+  elements.shopOverlay.classList.add("is-closing");
   document.body.classList.remove("shop-open");
-  elements.shopButton.focus();
+
+  shopCloseTimer = window.setTimeout(() => {
+    elements.shopOverlay.hidden = true;
+    elements.shopOverlay.classList.remove("is-closing");
+    elements.shopButton.focus();
+  }, 220);
 }
 
 function syncPendingEventOverlay() {
@@ -636,12 +706,33 @@ function acknowledgePendingEvent() {
 function showFloatText(amount, event) {
   const bounds = elements.floatLayer.getBoundingClientRect();
   const floating = document.createElement("span");
+  const x = event?.clientX ?? bounds.width / 2;
+  const y = event?.clientY ?? bounds.height / 2;
+
   floating.className = "float-text";
   floating.textContent = `+${formatNumber(amount)}`;
-  floating.style.left = `${event.clientX - bounds.left}px`;
-  floating.style.top = `${event.clientY - bounds.top}px`;
+  floating.style.left = `${x - bounds.left}px`;
+  floating.style.top = `${y - bounds.top}px`;
   elements.floatLayer.appendChild(floating);
   floating.addEventListener("animationend", () => floating.remove());
+}
+
+function animateScoreChange() {
+  elements.shekelCount.classList.remove("score-bump");
+  void elements.shekelCount.offsetWidth;
+  elements.shekelCount.classList.add("score-bump");
+}
+
+function applyTheme() {
+  document.body.classList.toggle("dark-mode", state.darkMode);
+  elements.darkModeButton.textContent = state.darkMode ? "Light" : "Dark";
+  elements.darkModeButton.setAttribute("aria-pressed", String(state.darkMode));
+}
+
+function toggleDarkMode() {
+  state.darkMode = !state.darkMode;
+  applyTheme();
+  saveGame();
 }
 
 function updateScreen() {
@@ -650,10 +741,15 @@ function updateScreen() {
   }
 
   const nextRebirthCost = rebirthCost();
+  const currentShekels = formatNumber(state.shekels);
+  const currentPerSecond = formatNumber(perSecond());
 
-  elements.shekelCount.textContent = formatNumber(state.shekels);
+  elements.shekelCount.textContent = currentShekels;
   elements.perClickValue.textContent = formatNumber(perClick());
-  elements.perSecondValue.textContent = formatNumber(perSecond());
+  elements.perSecondValue.textContent = currentPerSecond;
+  elements.shopShekelCount.textContent = currentShekels;
+  elements.shopClickCap.textContent = formatNumber(MAX_CLICKS_PER_SECOND);
+  elements.shopPerSecondValue.textContent = currentPerSecond;
   elements.rebirthCount.textContent = formatNumber(state.rebirths);
   elements.multiplierValue.textContent = `${incomeMultiplier().toFixed(2)}x`;
   elements.currentRebirthMultiplier.textContent = `${multiplier().toFixed(1)}x`;
@@ -701,18 +797,11 @@ function renderActiveEvents() {
   });
 }
 
-elements.flagButton.addEventListener("click", (event) => {
-  if (state.pendingRandomEvent) {
-    return;
-  }
-
-  const amount = perClick();
-  addShekels(amount);
-  showFloatText(amount, event);
-});
+elements.flagButton.addEventListener("click", registerManualClick);
 
 elements.shopButton.addEventListener("click", openShop);
 elements.closeShopButton.addEventListener("click", closeShop);
+elements.darkModeButton.addEventListener("click", toggleDarkMode);
 elements.shopOverlay.addEventListener("click", (event) => {
   if (event.target === elements.shopOverlay) {
     closeShop();
@@ -721,6 +810,11 @@ elements.shopOverlay.addEventListener("click", (event) => {
 document.addEventListener("keydown", (event) => {
   if (event.key === "Escape" && !elements.shopOverlay.hidden) {
     closeShop();
+  }
+
+  if (event.code === "Space" && !event.repeat && elements.shopOverlay.hidden && elements.eventOverlay.hidden) {
+    event.preventDefault();
+    registerManualClick();
   }
 });
 
@@ -745,6 +839,10 @@ setInterval(() => {
   }
 
   updateScreen();
+
+  if (earned > 0) {
+    animateScoreChange();
+  }
 
   if (earned > 0 || removedExpiredEvents) {
     saveGame();
